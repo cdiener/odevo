@@ -13,8 +13,8 @@ Why would I need it?
 
 `odevo` is particularly helpful if you need to fit parameters of large ordinary differential 
 equations systems and other scripting methods are too slow. As such it does not aim to replace 
-other great libraries such as [scipy](www.scipy.org) or [R](www.r-project.org), but rather gives 
-an alternative in case those are to slow. 
+other great libraries such as [scipy](http://www.scipy.org) or [R](http://www.r-project.org), 
+but rather gives an alternative in case those are to slow. 
 
 How is it faster?
 -----------------
@@ -57,7 +57,7 @@ sudo apt-get install build-essential cmake gfortran
 Arch already comes with a build-system installed, so you only need CMake and Fortran.
  
 ```bash
-sudo pacman -S gcc-fortran cmake
+sudo pacman -S cmake gcc-fortran
 ```
 
 MPI
