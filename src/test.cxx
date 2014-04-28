@@ -31,6 +31,12 @@
 
 using namespace std;
 
+// Global variables needed for fit
+
+//TODO: there must be a solver instance here
+std::vector<double> fit_time;		// time points used for fitting (where t_0 = 0)
+std::vector<double> init_vars;		// initial variable values
+
 void fitness(double* x, double* f, double* g)
 {
 	(*f) = 0.0;
@@ -38,6 +44,8 @@ void fitness(double* x, double* f, double* g)
 
 	(*g) = 0.0;
 }
+
+
 
 int main (int argc, char const* argv[])
 {		
