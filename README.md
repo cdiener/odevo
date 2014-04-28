@@ -13,7 +13,7 @@ Why would I need it?
 
 `odevo` is particularly helpful if you need to fit parameters of large ordinary differential 
 equations systems and other scripting methods are too slow. As such it does not aim to replace 
-other great libraries such as (scipy)[www.scipy.org] or (R)[www.r-project.org], but rather gives 
+other great libraries such as [scipy](www.scipy.org) or [R](www.r-project.org), but rather gives 
 an alternative in case those are to slow. 
 
 How is it faster?
@@ -65,12 +65,12 @@ MPI
 
 In order to use the parallel execution of code we use MPI (Message Passing Interface) which allows
 the odevo programs to run on multiple cores or even computer clusters natively. I recommend 
-(OpenMPI)[http://www.open-mpi.org/], however, the programs were also tested with 
-(MPICH)[http://www.mpich.org/].
+[OpenMPI](http://www.open-mpi.org/), however, the programs were also tested with 
+[MPICH](http://www.mpich.org/).
 
 
 
 Usage
 =====
 
-We will first explain the base case (fitting an ode)  
+We will first explain the base case (fitting an ode) followed by some more specialized cases. 
