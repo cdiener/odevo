@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <vector>
 #include <cmath>
 
 #include "lsoda.h"
@@ -39,46 +40,50 @@ void fitness(double* x, double* f, double* g)
 	(*g) = 0.0;
 }
 
-int main (int argc, char const* argv[])
-{		
-	double t[10];
-	for(unsigned int i=0; i<10; i++) t[i] = i/0.4;
-
-	auto start = chrono::high_resolution_clock::now();
-	Lsoda solver(sys, jac, p, ystart, neq, np, 0);
-	solver.timecourse_to_file(t, 10, "test.txt");
-	auto end = chrono::high_resolution_clock::now();
-
-	double* y = solver.get_y();
-	cout<<"y("<<solver.get_t()<<") = "<<y[0]<<"\t"<<y[1]<<endl;
-	cout<<"Needed "<<chrono::duration<double, milli>(end-start).count()<<" ms."<<endl;
-	cout<<solver;
-
+int main (int argc, char* argv[])
+{	
+	MPI_Init(&argc, &argv); 
+	int pID;
+	double start, stop;
 	
-	int myid;
-	double mt1, mt2;
+	MPI_Comm_rank(MPI_COMM_WORLD, &pID);
+		
+	vector<double> t;
+	for(unsigned int i=0; i<10; i++) t.push_back( i/0.4 );
+
+	if(pID == 0)
+	{
+		start = MPI_Wtime();
+		lsoda solver(sys, jac, p, ystart, neq, np, 0);
+		solver.timecourse_to_file(t, "test.txt");
+		stop = MPI_Wtime();
+
+		double* y = solver.get_y();
+		cout<<"y("<<solver.get_t()<<") = "<<y[0]<<"\t"<<y[1]<<endl;
+		cout<<"Needed "<<(stop-start)*1.0e3<<" ms."<<endl;
+		cout<<solver;
+	}
 	
-	MPI_SRES* opt = new MPI_SRES(fitness, DIM, 0);
+	mpi_sres opt(fitness, DIM, 0);
 	
-	opt->toFile = 0;
-	opt->logFreq = 100;
+	opt.toFile = 0;
+	opt.logFreq = 100;
+	
 	for(unsigned int i=0; i<DIM; i++) 
 	{
-		opt->lb[i] = -500.0;
-		opt->ub[i] = 500.0;
+		opt.lb[i] = -500.0;
+		opt.ub[i] = 500.0;
 	}
-	opt->init();
-	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	opt.init();
 	
-	mt1 = MPI_Wtime();	
-	*opt+=1000;	
+	start = MPI_Wtime();	
+	opt+=1000;	
 
-	mt2 = MPI_Wtime();
+	stop = MPI_Wtime();
 	
-	if(opt->converged() && myid==0) std::cout<<"Converged!"<<std::endl;	
+	if(opt.converged() && pID==0) std::cout<<"Converged!"<<std::endl;	
 	
-	delete opt;
-	if(myid == 0) std::cout<<"Needed "<<mt2-mt1<<" s."<<std::endl;	
+	if(pID == 0) std::cout<<"Needed "<<stop-start<<" s."<<std::endl;	
 
 	return 0;
 }

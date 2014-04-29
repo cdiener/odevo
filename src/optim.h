@@ -23,19 +23,16 @@
 
 #include <fstream>
 #include <iostream>
+#include <vector>
 #include <mpi.h>
 
 #include "SRES/sharefunc.h"
 #include "SRES/ESSRSort.h"
 #include "SRES/ESES.h"
 
-//Maximal parameter columns in terminal output
-#define MAXCOL 5
-#define SEP "--------------------------------------------------------------------------------"
-
 typedef void (*FitnessFunction)(double*, double*, double*);
 
-class MPI_SRES
+class mpi_sres
 {
 	private:
 		FitnessFunction f;
@@ -52,13 +49,13 @@ class MPI_SRES
 		double* strat_stat();	
 		
 	public:
-		//Parameters for evolutionary algorithm		
-		ESfcnTrsfm *trsfm;
-		int es, miu, lambda, retry;
-		double gamma, alpha, varphi, pf;
-		int toFile, logFreq;
-		char* logFile;
-		double *ub, *lb;
+		// settings for evolutionary algorithm		
+		ESfcnTrsfm *trsfm;					// parameter transformation function
+		int es, miu, lambda, retry;			// integer algorithm parameters
+		double gamma, alpha, varphi, pf;	// double algorithm parameters
+		int toFile, logFreq;				// whether logging to file and how often
+		char* logFile;						// name of the log file
+		double *ub, *lb;					// upper and lower parameter bounds
 		
 		// Parameters for convergence check
 		double rtol, atol, stol;
@@ -69,18 +66,18 @@ class MPI_SRES
 		
 		
 		//Stepping functions
-		MPI_SRES& operator++();
-		friend MPI_SRES& operator+=(MPI_SRES& opt, int steps);
+		mpi_sres& operator++();
+		friend mpi_sres& operator+=(mpi_sres& opt, int steps);
 
 		//Initializer
 		void init();
 
 		//Nice output functions
-		friend std::ostream& operator<<(std::ostream& out, MPI_SRES& sres);
+		friend std::ostream& operator<<(std::ostream& out, mpi_sres& sres);
 
 		//Con- and Destructors
-		MPI_SRES(FitnessFunction ff, int n_p, int init_now = 1, int n_const = 1, int gmax = 1e5);
-		~MPI_SRES();
+		mpi_sres(FitnessFunction ff, int n_p, int init_now = 1, int n_const = 1, int gmax = 1e5);
+		~mpi_sres();
 };
 
 #endif /* __OPTIM_H__ */

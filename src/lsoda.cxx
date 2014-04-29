@@ -21,9 +21,20 @@
 #include <fstream>
 #include "lsoda.h"
 
+// The error codes for the ode solver
+const char* solver_errors[] = {
+	"excessive amount of work done (more than 500 steps)",
+	"too much accuracy was requested for the precision",
+	"illegal input was detected",
+	"repeated error test failures on one attempted step",
+	"repeated convergence test failures on one attempted step",
+	"error weight became zero, did you set ATOL=0.0?",
+	"the length of RWORK and/or IWORK was too small, you should not see that :("
+};
+
 // Initializes all the stuff for LSODA
 // call everytime you change the system
-void Lsoda::init()
+void lsoda::init()
 {
 	itol = 1; //scalar Tolerances
 	rtol = RTOL;
@@ -57,7 +68,7 @@ void Lsoda::init()
 }
 
 // Minimal constructor, you need to set sys before calling the solver
-Lsoda::Lsoda(int n, unsigned int use_jac)
+lsoda::lsoda(int n, unsigned int use_jac)
 {
 	init_once = 0;
 	neq = n;
@@ -66,7 +77,7 @@ Lsoda::Lsoda(int n, unsigned int use_jac)
 }
 
 
-Lsoda::Lsoda(void (*sys_f)(int *neq, double *t, double *y, double *ydot), \
+lsoda::lsoda(void (*sys_f)(int *neq, double *t, double *y, double *ydot), \
 		void (*sys_jac)(int *neq, double *t, double *y, int *ml, int *mu, double *pd, int *nrowpd), \
 		double* pars, double* ystart, int neq, int np, unsigned int use_jac)
 {
@@ -81,7 +92,7 @@ Lsoda::Lsoda(void (*sys_f)(int *neq, double *t, double *y, double *ydot), \
 	init();
 }
 
-Lsoda::~Lsoda()
+lsoda::~lsoda()
 {
 	// Check if we initialized before and clean up 
 	
@@ -94,8 +105,7 @@ Lsoda::~Lsoda()
 }
 
 
-
-int Lsoda::step(const double to)
+int lsoda::step(const double to)
 {
 	tout = to;	
 
@@ -104,25 +114,22 @@ int Lsoda::step(const double to)
 
 	if(istate < 1)
 	{
-		std::cout<<"Integration not succesfull!"<<std::endl;
+		int state = -(istate+1); 
+		std::cout<<"Solver error: "<<solver_errors[state]<<std::endl;
 		return istate;
 	} 
-	else
-	{
-		t = tout;
-		return istate;
-	}
+	t = tout;
+	return istate;
 }
 
-std::vector<std::vector<double> > \
-Lsoda::timecourse(const double* to, const unsigned int n_t)
+std::vector<std::vector<double> > lsoda::timecourse(const std::vector<double> to)
 {
 	std::vector<std::vector<double> > out;
 	
 	init();
-	for(unsigned int i=0; i<n_t; i++)
+	for(unsigned int i=0; i<to.size(); i++)
 	{
-		if(to[i] < t)
+		if(to[i] <= t)
 		{
 			std::cout<<"Output times must be strictly monotonously increasing and larger than 0.0!\n"<<std::endl;
 			return out;
@@ -135,7 +142,7 @@ Lsoda::timecourse(const double* to, const unsigned int n_t)
 	return out;
 }
 
-int Lsoda::timecourse_to_file(const double* to, const unsigned int n_t, const char* out_file)
+int lsoda::timecourse_to_file(const std::vector<double> to, const char* out_file)
 {
 	std::ofstream ofs(out_file);
 	
@@ -144,7 +151,7 @@ int Lsoda::timecourse_to_file(const double* to, const unsigned int n_t, const ch
 	ofs<<std::endl;
 
 	init();
-	for(unsigned int i=0; i<n_t; i++)
+	for(unsigned int i=0; i<to.size(); i++)
 	{
 		if(to[i] < t)
 		{
@@ -163,13 +170,21 @@ int Lsoda::timecourse_to_file(const double* to, const unsigned int n_t, const ch
 	return istate;
 }
 
-std::ostream& operator<<(std::ostream& out, Lsoda& ls)
+std::ostream& operator<<(std::ostream& out, lsoda& ls)
 {
-	out<<"Lsoda solver diagnostics"<<std::endl;
-	out<<"step size = "<<ls.rwork[10]<<" | "<<"t = "<<ls.rwork[12]<<" | "<<"f evals = "<<ls.iwork[11]<<std::endl;
+	out<<"lsoda solver diagnostics:"<<std::endl;
+	out<<"> step size = "<<ls.rwork[10]<<" | "<<"t = "<<ls.rwork[12]<<" | "<<"f evals = "<<ls.iwork[11]<<std::endl;
 	
-	if(ls.iwork[19]==2) out<<"The problem is currently considered stiff (last switch t="<<ls.rwork[15]<<")."<<std::endl;
-	else out<<"The problem is currently considered nonstiff (last switch t="<<ls.rwork[15]<<")."<<std::endl;
+	if(ls.iwork[19]==2) 
+	{
+		out<<"> using the bdf method (last switch at t="
+		   <<ls.rwork[15]<<")."<<std::endl;
+	}
+	else 
+	{
+		out<<"> using the adams method (last switch t="<<ls.rwork[15]
+		   <<")."<<std::endl;
+	}
 
 	return out;
 }

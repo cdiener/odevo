@@ -21,7 +21,11 @@
 #include "optim.h"
 #include <cmath>
 
-void MPI_SRES::init()
+//Maximal parameter columns in terminal output and separator
+const unsigned int MAXCOL = 5;
+const char* SEP = "--------------------------------------------------------------------------------";
+
+void mpi_sres::init()
 {
 	int ac = 0;
 	char ** av = NULL;
@@ -38,7 +42,7 @@ void MPI_SRES::init()
 			gen_max, gamma, alpha, varphi, retry, &population, &stats);
 }
 
-double* MPI_SRES::strat_stat()
+double* mpi_sres::strat_stat()
 {
 	double* stat = new double[2];
 	stat[0] = stat[1] = 0.0;
@@ -52,7 +56,7 @@ double* MPI_SRES::strat_stat()
 	return stat;
 }
 
-MPI_SRES::MPI_SRES(FitnessFunction ff, int n_p, int init_now, int n_const, int gmax)
+mpi_sres::mpi_sres(FitnessFunction ff, int n_p, int init_now, int n_const, int gmax)
 {
 	this->n_p = n_p;
 	this->gen_max = gmax;
@@ -90,7 +94,7 @@ MPI_SRES::MPI_SRES(FitnessFunction ff, int n_p, int init_now, int n_const, int g
 	if(init_now) init();
 }
 
-MPI_SRES::~MPI_SRES()
+mpi_sres::~mpi_sres()
 {
 	delete[] lb;
 	delete[] ub;
@@ -100,14 +104,14 @@ MPI_SRES::~MPI_SRES()
 	ESDeInitial(param, population, stats);
 }
 
-MPI_SRES& MPI_SRES::operator++()
+mpi_sres& mpi_sres::operator++()
 {
 	if(stats->curgen < param->gen) ESStep(population, param, stats, pf);
 
 	return *this;
 }
 
-MPI_SRES& operator+=(MPI_SRES& opt, int steps)
+mpi_sres& operator+=(mpi_sres& opt, int steps)
 {
 	unsigned int j;
 
@@ -148,7 +152,7 @@ MPI_SRES& operator+=(MPI_SRES& opt, int steps)
 	return opt;
 }
 
-int MPI_SRES::converged()
+int mpi_sres::converged()
 {
 	double* strat = strat_stat();
 	
@@ -164,7 +168,7 @@ int MPI_SRES::converged()
 	}
 }
 
-std::ostream& operator<<(std::ostream& out, MPI_SRES& sres)
+std::ostream& operator<<(std::ostream& out, mpi_sres& sres)
 {
 	int myid;
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);

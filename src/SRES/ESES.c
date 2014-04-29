@@ -89,8 +89,10 @@ void ESInitial(int *argc, char ***argv,   \
 {
   unsigned int outseed;
   int myid, numprocs;
+  int init_flag;
 
-  MPI_Init(argc, argv);
+  MPI_Initialized(&init_flag);
+  if(!init_flag) MPI_Init(argc, argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &myid);
   MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
   if(numprocs < 2)
