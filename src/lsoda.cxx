@@ -95,7 +95,6 @@ lsoda::lsoda(void (*sys_f)(int *neq, double *t, double *y, double *ydot), \
 lsoda::~lsoda()
 {
 	// Check if we initialized before and clean up 
-	
 	if(init_once)
 	{
 		delete[] rwork;
@@ -137,7 +136,7 @@ std::vector<std::vector<double> > lsoda::timecourse(const std::vector<double> to
 		
 		step(to[i]);
 		
-		out.push_back( std::vector<double>(y, y + neq) );
+		out.push_back( std::vector<double>(y, y+neq-1) );
 	}
 	return out;
 }

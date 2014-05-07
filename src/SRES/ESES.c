@@ -105,7 +105,7 @@ void ESInitial(int *argc, char ***argv,   \
   ESInitialParam(param, trsfm, fg, es, outseed,constraint, dim, ub, lb,   \
                  miu, lambda, gen, gamma, alpha, varphi, retry);
   ESInitialPopulation(population, (*param));
-  ESInitialStat(stats, (*population), (*param));
+  ESInitialStat(stats, (*param));
 
   if(myid == 0)
   {
@@ -122,7 +122,7 @@ void ESDeInitial(ESParameter *param, ESPopulation *population,   \
   ESDeInitialStat(stats);
   ESDeInitialParam(param);
 
-  MPI_Finalize();
+  //MPI_Finalize();
   return;
 }
 
@@ -349,10 +349,13 @@ void ESDeInitialIndividual(ESIndividual *indvdl)
 
   return;
 }
+
+/*
 void ESPrintIndividual(ESIndividual *indvdl, ESParameter *param)
 {
   return;
 }
+*/ 
 void ESPrintOp(ESIndividual *indvdl, ESParameter *param)
 {
   int i;
@@ -423,7 +426,7 @@ void ESCopyIndividual(ESIndividual *from, ESIndividual *to, ESParameter *param)
 
 /*********************************************************************
  ** initialize statistics                                           **
- ** ESInitialStat(stats, population, param)                         **
+ ** ESInitialStat(stats, param)			                            **
  ** to intialize time, curgen, bestindvdl,thisbestindvdl            **
  ** not to do the first statistics                                  **
  ** to set dt, bestgen                                              **
@@ -431,8 +434,7 @@ void ESCopyIndividual(ESIndividual *from, ESIndividual *to, ESParameter *param)
  ** ESDeInitialStat(stats)                                          **
  ** free statistics                                                 **
  *********************************************************************/
-void ESInitialStat(ESStatistics **stats, ESPopulation *population,   \
-                   ESParameter *param)
+void ESInitialStat(ESStatistics **stats, ESParameter *param)
 {
   (*stats) = (ESStatistics *)ShareMallocM1c(sizeof(ESStatistics));
   (*stats)->bestgen = 0;
@@ -478,7 +480,7 @@ void ESDeInitialStat(ESStatistics *stats)
 void ESDoStat(ESStatistics *stats, ESPopulation *population,   \
               ESParameter *param)
 {
-  int i,j;
+  int i;
   int eslambda;
   int flag,count;
 
@@ -568,7 +570,7 @@ void ESStep(ESPopulation *population, ESParameter *param,   \
   }
   else
   {
-    ESMPIMutate(population, param);
+    ESMPIMutate(param);
     stats->curgen +=1;
   }
 
@@ -686,7 +688,6 @@ void ESMutate(ESPopulation * population, ESParameter *param)
   ESIndividual *indvdl;
   double **sp_, **op_;
   double tmp;
-  ESfcnFG fg;
   
   int numprocs,nummpi;
   MPI_Status status;
@@ -711,7 +712,6 @@ void ESMutate(ESPopulation * population, ESParameter *param)
   ub = param->ub;
   lb = param->lb;
   dim = param->dim;
-  fg = param->fg;
   randvec = ShareMallocM1d(dim);
   sp_ = ShareMallocM2d(lambda, dim);
   op_ = ShareMallocM2d(lambda, dim);
@@ -830,7 +830,7 @@ void ESMutate(ESPopulation * population, ESParameter *param)
   return;
 }
 
-void ESMPIMutate(ESPopulation *population, ESParameter *param)
+void ESMPIMutate(ESParameter *param)
 {
   int i,j,k,l;
   int lambda, dim, constraint;

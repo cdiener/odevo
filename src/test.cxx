@@ -23,25 +23,48 @@
 #include <chrono>
 #include <vector>
 #include <cmath>
+#include <random>
+#include <algorithm>
 
 #include "lsoda.h"
 #include "system.h"
 #include "optim.h"
 
-#define DIM 8
+// Parameters for the fitting test
+const double noise_sd = 0.1;
+const double tmax = 10.0;
 
 using namespace std;
 
 // Global variables needed for fit
 
-//TODO: there must be a solver instance here
-std::vector<double> fit_time;		// time points used for fitting (where t_0 = 0)
-std::vector<double> init_vars;		// initial variable values
+unsigned int nt = 16;				// number of time points 
+vector<double> fit_time;			// time points used for fitting (where t_0 = 0)
+//vector<double> init_vars;			// initial variable values
+double *pars;						// the parameters
+vector<int> fit_idx;				// indices of the variables to be fitted
+vector<vector<double> > data_means;	// means of the measured data points
+vector<vector<double> > data_vars;	// variances of the measured data points
+double data_mean_var = 1.0;			// mean variance of the data, used if no variance available
 
+// the ode solver
+lsoda solver(sys, jac, pars, ystart, neq, np, use_jac);	
+
+// the fitness function we use
 void fitness(double* x, double* f, double* g)
 {
+	for(unsigned int i=0; i<np; i++) p[i] = x[i];
+	vector<vector<double> > tc = solver.timecourse(fit_time);
+	double var = 0.0;
+	
 	(*f) = 0.0;
-	for(unsigned int i=0; i<DIM; i++) (*f) += x[i]*sin( sqrt( fabs(x[i]) ) );
+	for(unsigned int i=0; i<fit_time.size(); i++)
+		for(unsigned int j=0; j<fit_idx.size(); j++) 
+		{
+			var = data_vars[i][j];
+			if( var < 1.0e-6 ) var = data_mean_var;
+			(*f) += pow(tc[i][ fit_idx[j] ] - data_means[i][j], 2)/var;
+		}
 
 	(*g) = 0.0;
 }
@@ -53,36 +76,77 @@ int main (int argc, char* argv[])
 	double start, stop;
 	
 	MPI_Comm_rank(MPI_COMM_WORLD, &pID);
-		
-	vector<double> t;
-	for(unsigned int i=0; i<10; i++) t.push_back( i/0.4 );
-
+	
+	double *t = new double[nt];
+	double *x = new double[nt];
+	double *y = new double[nt];
+	
+	// Generate some random data points in parallel
 	if(pID == 0)
 	{
+		cout<<"Generating random data...";	
 		start = MPI_Wtime();
-		lsoda solver(sys, jac, p, ystart, neq, np, 0);
-		solver.timecourse_to_file(t, "test.txt");
-		stop = MPI_Wtime();
-
-		double* y = solver.get_y();
-		cout<<"y("<<solver.get_t()<<") = "<<y[0]<<"\t"<<y[1]<<endl;
-		cout<<"Needed "<<(stop-start)*1.0e3<<" ms."<<endl;
-		cout<<solver;
+		random_device rd;
+		mt19937 gen(rd());
+		std::normal_distribution<> rnorm(0, noise_sd);
+		std::uniform_real_distribution<> runif(0, tmax);
+		
+		for(unsigned int i=0; i<nt; i++)
+		{
+			t[i] = runif(gen);
+			x[i] = rnorm(gen);
+		} 
+		cout<<"Done."<<endl;
+	}
+	else if(pID == 1)
+	{
+		random_device rd;
+		mt19937 gen(rd());
+		std::normal_distribution<> rnorm(0, noise_sd);
+		
+		for(unsigned int i=0; i<nt; i++) y[i] = rnorm(gen);
+		cout<<"Bla"<<endl;
+	}
+	MPI_Bcast(t, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(x, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast(y, nt, MPI_DOUBLE, 1, MPI_COMM_WORLD);
+	// ============================================================
+	
+	// Assemble data set to look like the one in the odevo programs
+	if( pID==0 ) cout<<"Assembling data...";
+	fit_time.insert(fit_time.begin(), t, t+nt);
+	sort( fit_time.begin(), fit_time.end() );
+	vector<vector<double> > tc = solver.timecourse(fit_time);
+	
+	for(unsigned int i=0; i<nt; i++)
+	{
+		data_means.push_back(vector<double>(2));
+		data_means[i][0] = x[i] + tc[i][0];
+		data_means[i][1] = y[i] + tc[i][1];
+		cout<<data_means[i][0]<<" "<<data_means[i][1]<<" "<<tc[i][0]<<endl;;
 	}
 	
-	mpi_sres opt(fitness, DIM, 0);
+	fit_idx.emplace_back(0);
+	fit_idx.emplace_back(1);
+	data_vars = vector<vector<double> >(nt, vector<double>(2, 0.0) );
+	
+	delete[] t, x, y;
+	if( pID==0 ) cout<<"Done."<<endl;
+	// ============================================================
+	
+	// Initialize the fit
+	mpi_sres opt(fitness, np, 0);
 	
 	opt.toFile = 0;
 	opt.logFreq = 100;
 	
-	for(unsigned int i=0; i<DIM; i++) 
+	for(unsigned int i=0; i<np; i++) 
 	{
-		opt.lb[i] = -500.0;
-		opt.ub[i] = 500.0;
+		opt.lb[i] = 0.0;
+		opt.ub[i] = 10.0;
 	}
 	opt.init();
-	
-	start = MPI_Wtime();	
+		
 	opt+=1000;	
 
 	stop = MPI_Wtime();
@@ -90,7 +154,9 @@ int main (int argc, char* argv[])
 	if(opt.converged() && pID==0) std::cout<<"Converged!"<<std::endl;	
 	
 	if(pID == 0) std::cout<<"Needed "<<stop-start<<" s."<<std::endl;	
-
+	
+	MPI_Finalize();
+	
 	return 0;
 }
 

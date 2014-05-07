@@ -2,7 +2,7 @@
  * optim.cxx
  * This file is part of optim
  *
- * Copyright (C) 2012 - Christian Diener
+ * Copyright (C) 2014 - Christian Diener
  *
  * optim is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

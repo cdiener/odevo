@@ -288,7 +288,7 @@ void ESCopyIndividual(ESIndividual *, ESIndividual *, ESParameter *);
  ** ESDeInitialStat(stats)                                          **
  ** free statistics                                                 **
  *********************************************************************/
-void ESInitialStat(ESStatistics **, ESPopulation *, ESParameter *);
+void ESInitialStat(ESStatistics **, ESParameter *);
 void ESDeInitialStat(ESStatistics *);
 /*********************************************************************
  ** do statistics                                                   **
@@ -360,7 +360,7 @@ void ESSelectPopulation(ESPopulation *, ESParameter *);
  ** Slave:  re-calculate f/g/phi                                    **
  *********************************************************************/
 void ESMutate(ESPopulation *, ESParameter *);
-void ESMPIMutate(ESPopulation *, ESParameter *);
+void ESMPIMutate(ESParameter *);
 
 #endif
 

@@ -16,7 +16,11 @@ include_directories(${MPI_INCLUDE_PATH})
 
 set(CMAKE_BUILD_TYPE Release)
 
-add_definitions(-std=c++11)
+# Set addtitional dependencies and flags
+set(LIBS ${LIBS} SRES odepack gfortran ${MPI_LIBRARIES})
+set(LIBS ${LIBS} -Wl,-O1,--sort-common,--as-needed,-z,relro)
+add_definitions(-std=c++11 -Wpedantic
+				-fstack-protector --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2)
 
 # Build the program
 add_executable(test src/test.cxx src/lsoda.cxx src/optim.cxx)

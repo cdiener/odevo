@@ -26,7 +26,7 @@
 #include <iostream>
 
 // default error tolerances
-const double ATOL  = 1e-12;
+const double ATOL  = 1e-6;
 const double RTOL = 1e-8;
 
 // External call masking the FORTRAN lsoda implementation

@@ -1,8 +1,8 @@
 /*
  * system.h
- * This file is part of optim
+ * This file is part of odevo
  *
- * Copyright (C) 2012 - Christian Diener
+ * Copyright (C) 2014 - Christian Diener
  *
  * optim is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,9 @@
 
 double ystart[] = {1.0, 1.0};
 double p[] = {1.0, 3.0, 1.0, 1.0};
-int np = 4;
-int neq = 2;
+const int use_jac = 0;
+const unsigned int np = 4;
+const unsigned int neq = 2;
 
 void sys(int *neq, double *t, double *y, double *ydot)
 {

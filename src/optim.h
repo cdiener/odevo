@@ -2,7 +2,7 @@
  * optim.h
  * This file is part of optim
  *
- * Copyright (C) 2012 - Christian Diener
+ * Copyright (C) 2014 - Christian Diener
  *
  * optim is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,8 +58,8 @@ class mpi_sres
 		double *ub, *lb;					// upper and lower parameter bounds
 		
 		// Parameters for convergence check
-		double rtol, atol, stol;
-		int gen_min;
+		double rtol, atol, stol;	// relative, absolute and standard dev. tolerance
+		int gen_min;				// minimum number of generations before tolerance check
 
 		//Convergence tester
 		int converged();

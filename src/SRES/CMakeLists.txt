@@ -4,6 +4,12 @@ include_directories(${MPI_INCLUDE_PATH})
 
 set(CMAKE_BUILD_TYPE Release)
 
+# Set addtitional dependencies and flags
+set(LIBS ${LIBS} ${MPI_LIBRARIES})
+set(LIBS ${LIBS} -Wl,-O1,--sort-common,--as-needed,-z,relro)
+add_definitions(-Wall -Wextra 
+				-fstack-protector --param=ssp-buffer-size=4 -D_FORTIFY_SOURCE=2)
+
 add_library(SRES ESES.c ESSRSort.c sharefunc.c ESES.h ESSRSort.h sharefunc.h)
 target_link_libraries(SRES ${MPI_LIBRARIES})
 
