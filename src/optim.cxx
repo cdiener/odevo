@@ -47,11 +47,11 @@ double* mpi_sres::strat_stat()
 	double* stat = new double[2];
 	stat[0] = stat[1] = 0.0;
 	
-	for(unsigned int i; i<n_p; i++) stat[0] += stats->bestindvdl->sp[i];
-	for(unsigned int i; i<n_p; i++) stat[1] += pow(stats->bestindvdl->sp[i] - stat[0], 2);
+	for(unsigned int i=0; i<n_p; i++) stat[0] += stats->bestindvdl->sp[i];
+	for(unsigned int i=0; i<n_p; i++) stat[1] += pow(stats->bestindvdl->sp[i] - stat[0], 2);
 
 	stat[0] = stat[0]/(double)n_p;
-	stat[1] = sqrt( stat[1]/(n_p - 1.0) );
+	if(n_p>1) stat[1] = sqrt( stat[1]/(n_p - 1.0) );
 
 	return stat;
 }

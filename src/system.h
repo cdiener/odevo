@@ -21,16 +21,20 @@
 #ifndef __SYSTEM_H__
 #define __SYSTEM_H__
 
-double ystart[] = {1.0, 1.0};
-double p[] = {1.0, 3.0, 1.0, 1.0};
+#include <cmath>
+
+using namespace std;
+
+double ystart[] = {0.0, 1.0};
+double p[] = {42.0};
 const int use_jac = 0;
-const unsigned int np = 4;
+const unsigned int np = 1;
 const unsigned int neq = 2;
 
 void sys(int *neq, double *t, double *y, double *ydot)
 {
-	ydot[0] = p[0] - p[1]*y[0] + p[2]*y[0]*y[0]*y[1] - p[3]*y[0];  
-	ydot[1] = p[1]*y[0] - p[2]*y[0]*y[0]*y[1];
+	ydot[0] = y[1];  
+	ydot[1] = p[0]*(1.0 - y[0]*y[0])*y[1] - y[0];
 }
 
 void jac(int *neq, double *t, double *y, int *ml, int *mu, double *pd, int *nrowpd){}

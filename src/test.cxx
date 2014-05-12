@@ -31,14 +31,14 @@
 #include "optim.h"
 
 // Parameters for the fitting test
-const double noise_sd = 0.1;
-const double tmax = 10.0;
+const double noise_sd = 1.0;
+const double tmax = 100.0;
 
 using namespace std;
 
 // Global variables needed for fit
 
-unsigned int nt = 16;				// number of time points 
+unsigned int nt = 128;				// number of time points 
 vector<double> fit_time;			// time points used for fitting (where t_0 = 0)
 //vector<double> init_vars;			// initial variable values
 double *pars;						// the parameters
@@ -105,7 +105,6 @@ int main (int argc, char* argv[])
 		std::normal_distribution<> rnorm(0, noise_sd);
 		
 		for(unsigned int i=0; i<nt; i++) y[i] = rnorm(gen);
-		cout<<"Bla"<<endl;
 	}
 	MPI_Bcast(t, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	MPI_Bcast(x, nt, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -123,15 +122,22 @@ int main (int argc, char* argv[])
 		data_means.push_back(vector<double>(2));
 		data_means[i][0] = x[i] + tc[i][0];
 		data_means[i][1] = y[i] + tc[i][1];
-		cout<<data_means[i][0]<<" "<<data_means[i][1]<<" "<<tc[i][0]<<endl;;
+		if(pID==0) cout<<fit_time[i]<<'\t'<<tc[i][0]<<endl;
 	}
 	
 	fit_idx.emplace_back(0);
-	fit_idx.emplace_back(1);
 	data_vars = vector<vector<double> >(nt, vector<double>(2, 0.0) );
 	
 	delete[] t, x, y;
-	if( pID==0 ) cout<<"Done."<<endl;
+	
+	double best_f, g;
+	fitness(p, &best_f, &g);
+	if(pID==0) 
+	{
+		cout<<solver<<endl;
+		cout<<"Best fitness: "<<best_f<<endl;
+		cout<<"Done."<<endl;
+	}
 	// ============================================================
 	
 	// Initialize the fit
@@ -143,7 +149,7 @@ int main (int argc, char* argv[])
 	for(unsigned int i=0; i<np; i++) 
 	{
 		opt.lb[i] = 0.0;
-		opt.ub[i] = 10.0;
+		opt.ub[i] = 1000.0;
 	}
 	opt.init();
 		
